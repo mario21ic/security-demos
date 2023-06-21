@@ -16,11 +16,15 @@ Usar slot anterior y reemplazarlo por xxxx. Va a preguntar dos PINs, no olvidarl
 ```
 zk_pkcs11-util --use-zkslot 0 --slot xxxx --label sshkey --id 0001
 zk_pkcs11-util --show-slots
+pkcs11-tool --list-token
 ```
 
 Usar modulo para enlazar token (reemplaza por su PIN) y listado de objects:
 ```
-pkcs11-tool --module /usr/lib/libzk_pkcs11.so -l -p xxxx --token Zymey --list-object
+pkcs11-tool --module /usr/lib/libzk_pkcs11.so -l -p xxxx --show-info
+pkcs11-tool --module /usr/lib/libzk_pkcs11.so -l -p xxxx --list-slots
+pkcs11-tool --module /usr/lib/libzk_pkcs11.so -l -p xxxx --list-token-slots
+pkcs11-tool --module /usr/lib/libzk_pkcs11.so -l -p xxxx --token Zymey --list-objects
 ```
 
 Configurar ssh key:
