@@ -12,6 +12,13 @@ zk_pkcs11-util --init-token --slot 0 --label Zymkey
 zk_pkcs11-util --show-slots
 ```
 
+Opcional: eliminar tokens y slots:
+```
+$ sudo zk_pkcs11-util --delete-token --serial xxxxxxx
+$ sudo zk_pkcs11-util --show-slots
+```
+
+
 Usar slot anterior y reemplazarlo por xxxx. Va a preguntar dos PINs, no olvidarlos
 ```
 zk_pkcs11-util --use-zkslot 0 --slot xxxx --label sshkey --id 0001
