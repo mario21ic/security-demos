@@ -32,11 +32,29 @@ sudo pkcs11-tool --module $OPENSC_MODULE --init-token --init-pin --so-pin=$SO_PI
 
 Generar key pair:
 ```
-sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:1024 --id 10
+# RSA
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:1024 --id 10 --label "rsa-1024-key"
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:2048 --id 11 --label "rsa-2048-key"
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:2048 --id 12 --label "rsa-4096-key"
+
+
+# ECDSA
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type EC:prime256v1 --id 13 --label "my-ec-p256"
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type EC:secp384r1 --id 14 --label "my-ec-p384"
+
+
+# Listado privados / publicos
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type privkey
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type pubkey
 ```
+
 Otra forma, pero en ECC keys es:
+```
 sudo pkcs11-tool —module $OPENSC_MODULE —login —pin $USER_PIN —keypairgen —key-type EC:prime256v1 —label mykey
+```
 
 Extraer la public key del id 10 y guardarlo en pubkey.spki:
 ```
