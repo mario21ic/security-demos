@@ -37,7 +37,7 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-t
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:2048 --id 11 --label "rsa-2048-key"
-sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:2048 --id 12 --label "rsa-4096-key"
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:4096 --id 12 --label "rsa-4096-key"
 
 
 # ECDSA
