@@ -30,7 +30,7 @@ Otra forma es:
 sudo pkcs11-tool --module $OPENSC_MODULE --init-token --init-pin --so-pin=$SO_PIN --new-pin=$USER_PIN --label="test" --pin=$USER_PIN
 ```
 
-Generar key pair:
+### 🗝️ GENERACIÓN DE CLAVES
 ```
 # RSA
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type rsa:1024 --id 10 --label "rsa-1024-key"
@@ -57,10 +57,6 @@ Otra forma, pero en ECC keys es:
 sudo pkcs11-tool —module $OPENSC_MODULE —login —pin $USER_PIN —keypairgen —key-type EC:prime256v1 —label mykey
 ```
 
-Extraer la public key del id 10 y guardarlo en pubkey.spki:
-```
-```
-
 
 Grabar certificados y data:
 ```
@@ -71,7 +67,7 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --write-object testc
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 ```
 
-📜 PKI — CSR Y CERTIFICADOS
+### 📜 PKI — CSR Y CERTIFICADOS
 ```
 # Exportar public key 
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type pubkey --id 10 --output-file pubkey-10.der
@@ -104,18 +100,21 @@ sudo head csr-10.pem
 sudo openssl req -in csr-10.pem -text -noout
 
 # Auto-firmar certificado (útil para CA root en lab)
-sudo openssl x509 \
-  -engine pkcs11 \
-  -CAkeyform engine \
-  -CAkey "pkcs11:token=$HSM_TOKEN;id=%10;type=private" \
-  -req \
-  -in csr-10.pem \
-  -signkey "pkcs11:token=$HSM_TOKEN;id=%10;type=private" \
-  -days 3650 \
-  -out cert-10.pem
 
+$ export GNUTLS_PIN=$USER_PIN
+$ certtool   --generate-self-signed   --load-privkey "pkcs11:token=$HSM_TOKEN;id=%10;type=private"   --outfile cert-10.pem   --template /dev/stdin << 'EOF'
+cn = "mi-servicio"
+organization = "MiOrg"
+country = PE
+ca
+cert_signing_key
+expiration_days = 3650
+EOF
+
+# Importar certificado de vuelta al HSM
+$ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --write-object cert-10.pem   --type cert   --id 11   --label "mi-cert"
+$ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 ```
-
 
 Listado:
 ```
@@ -128,6 +127,82 @@ sudo pkcs11-tool --module $OPENSC_MODULE --list-token-slots
 
 sudo pkcs11-tool --module $OPENSC_MODULE --list-objects
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+```
+
+### FIRMA y VERIFICACION ✍️ 
+```
+echo "datos a firmar" > data.txt
+
+# Firmar con RSA-SHA256 (clave en HSM)
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --sign \
+  --mechanism SHA256-RSA-PKCS \
+  --id 10 \
+  --input-file data.txt \
+  --output-file data.sig
+
+sudo file data.sig
+sudo head data.sig
+
+# Firmar con ECDSA
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --sign --mechanism ECDSA-SHA256 \
+  --id 13 \
+  --input-file data.txt \
+  --output-file data-ec.sig
+sudo file data-ec.sig
+sudo head data-ec.sig
+
+# Verificar con la public key exportada
+# RSA
+sudo openssl dgst \
+  -sha256 \
+  -verify pubkey-10.pem \
+  -signature data.sig \
+  data.txt
+
+# ECDSA
+# Script de conversión P1363 → DER
+python3 << 'PYEOF'
+import sys, struct
+
+with open("data-ec.sig", "rb") as f:
+    raw = f.read()
+
+# Para P-384: R y S son cada uno 48 bytes → total 96 bytes
+# Para P-256: R y S son cada uno 32 bytes → total 64 bytes
+half = len(raw) // 2
+r = raw[:half]
+s = raw[half:]
+
+def encode_int(n):
+    # Eliminar ceros a la izquierda pero mantener signo positivo
+    n = n.lstrip(b'\x00')
+    if n[0] & 0x80:          # si el bit alto está seteado, agregar 0x00 para signo
+        n = b'\x00' + n
+    return bytes([0x02, len(n)]) + n
+
+r_enc = encode_int(r)
+s_enc = encode_int(s)
+seq_body = r_enc + s_enc
+der_sig = bytes([0x30, len(seq_body)]) + seq_body
+
+with open("data-ec.sig.der", "wb") as f:
+    f.write(der_sig)
+
+print(f"Raw sig: {len(raw)} bytes (R={half}B, S={half}B)")
+print(f"DER sig: {len(der_sig)} bytes")
+print(f"Guardado en data-ec.sig.der")
+PYEOF
+
+# Verificar con la firma convertida
+openssl dgst \
+  -sha256 \
+  -verify pubkey-13.pem \
+  -signature data-ec.sig.der \
+  data.txt
+
+
+# Listado de mecanismos soportados por el HSM
+$ pkcs11-tool --module $OPENSC_MODULE --list-mechanisms
 ```
 
 
