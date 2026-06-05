@@ -23,8 +23,8 @@ sudo opensc-tool --reader 0 --name
 
 Definir SO pin y User pin
 ```
-export SO_PIN=$SO_PIN
-export USER_PIN=648219
+export SO_PIN=1234567890123456
+export USER_PIN=123456
 
 sc-hsm-tool --initialize --so-pin $SO_PIN --pin $USER_PIN
 ```
