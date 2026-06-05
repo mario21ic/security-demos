@@ -71,13 +71,17 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 ```
 # Exportar public key 
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type pubkey --id 10 --output-file pubkey-10.der
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type pubkey --id 13 --output-file pubkey-13.der
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type pubkey --id 14 --output-file pubkey-14.der
+
 
 # RSA: Convertir DER a PEM
 sudo openssl pkey -inform DER -outform PEM -in pubkey-10.der -pubin -out pubkey-10.pem
 
 # ECDSA: Convertir DER a PEM
+sudo openssl ec -pubin -inform DER -in pubkey-13.der -outform PEM -out pubkey-13.pem
 sudo openssl ec -pubin -inform DER -in pubkey-14.der -outform PEM -out pubkey-14.pem
+
 
 # Buscar toke label
 sudo pkcs11-tool --module $OPENSC_MODULE --list-token-slots
@@ -205,6 +209,25 @@ openssl dgst \
 $ pkcs11-tool --module $OPENSC_MODULE --list-mechanisms
 ```
 
+
+### CIFRAR Y DESCIFRAR 🔐
+```
+# Cifrar RSA con clave pública (desde el PEM exportado del HSM)
+$ sudo openssl pkeyutl \
+  -encrypt \
+  -pubin \
+  -inkey pubkey-10.pem \
+  -pkeyopt rsa_padding_mode:oaep \
+  -pkeyopt rsa_oaep_md:sha256 \
+  -in data.txt \
+  -out data.enc
+
+# Descifrar RSA con clave pública 
+$ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN \
+  --decrypt --mechanism RSA-PKCS-OAEP \
+  --id 10 --input-file data.enc \
+  --output-file data.dec
+```
 
 Eliminar:
 ```
