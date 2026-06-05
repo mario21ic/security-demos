@@ -1,6 +1,6 @@
 Instalar apps:
 ```
-sudo apt install --reinstall opensc opensc-pkcs11 pcscd pcsc-tools libccid libengine-pkcs11-openssl
+sudo apt install --reinstall opensc opensc-pkcs11 pcscd pcsc-tools libccid libengine-pkcs11-openssl gnutls-bin
 sudo systemctl enable --now pcscd pcscd.socket
 
 dpkg -L opensc-pkcs11 | grep opensc-pkcs11.so
