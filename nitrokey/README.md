@@ -5,6 +5,7 @@ sudo systemctl enable --now pcscd pcscd.socket
 
 dpkg -L opensc-pkcs11 | grep opensc-pkcs11.so
 export OPENSC_MODULE=/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
+export PKCS11_MODULE=/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
 
 # Listado de mecanismos soportados
 sudo pkcs11-tool --module $OPENSC_MODULE --list-mechanisms
@@ -272,9 +273,20 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --typ
 sudo pkcs11-tool --module $OPENSC_MODULE \
   -l --pin $USER_PIN \
   --read-object --type data \
-  --id 30 \
-  --output-file mydata-recovered.json
+  --label config-teleport \
+  --output-file config-teleport-recovered.json
 
+# Grabar un secret aes 256
+openssl rand 32 > aes-256.key
+echo "Clave AES generada: $(xxd -p aes-256.key)"
+sudo pkcs11-tool --module $OPENSC_MODULE   -l --pin $USER_PIN   --write-object aes-256.key   --type data   --id 20   --label "aes-256-key"   --private
+
+# Leer
+sudo pkcs11-tool --module $OPENSC_MODULE \
+  -l --pin $USER_PIN \
+  --read-object --type data \
+  --label "aes-256-key" \
+  --output-file aes-256-recovered.key
 
 ```
 
