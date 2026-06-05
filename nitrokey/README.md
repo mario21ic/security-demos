@@ -5,6 +5,9 @@ sudo systemctl enable --now pcscd pcscd.socket
 
 dpkg -L opensc-pkcs11 | grep opensc-pkcs11.so
 export OPENSC_MODULE=/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
+
+# Listado de mecanismos soportados
+sudo pkcs11-tool --module $OPENSC_MODULE --list-mechanisms
 ```
 
 Reconocimiento del hardware:
@@ -45,8 +48,12 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-t
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --keypairgen --key-type EC:secp384r1 --id 14 --label "my-ec-p384"
 
 
-# Listado privados / publicos
+# Listar objects (no requiere login — son públicos por defecto)
+sudo pkcs11-tool --module $OPENSC_MODULE --list-objects
+
+# Listar data objects (requiere login por ser privados)
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+
 
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type privkey
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type pubkey
@@ -67,7 +74,7 @@ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --write-object testc
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 ```
 
-### 📜 PKI — CSR Y CERTIFICADOS
+### 📜 PKI — CSR Y CERTIFICADOS (X.509)
 ```
 # Exportar public key 
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type pubkey --id 10 --output-file pubkey-10.der
@@ -242,6 +249,33 @@ $ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN \
   --decrypt --mechanism RSA-PKCS-OAEP \
   --id 10 --input-file data.enc \
   --output-file data.dec
+```
+
+### DATA OBJECT 
+```
+# Crear datos de prueba
+echo '{"app":"teleport","env":"homelab","secret":"valor-sensible"}' > mydata.json
+
+# Importar como data object
+sudo pkcs11-tool --module $OPENSC_MODULE \
+  -l --pin $USER_PIN \
+  --write-object mydata.json \
+  --type data \
+  --id 30 \
+  --label "config-teleport" \
+  --application-label "teleport-config"
+
+sudo pkcs11-tool --module $OPENSC_MODULE \
+  --list-objects --type data
+
+# Leer desde HSM
+sudo pkcs11-tool --module $OPENSC_MODULE \
+  -l --pin $USER_PIN \
+  --read-object --type data \
+  --id 30 \
+  --output-file mydata-recovered.json
+
+
 ```
 
 Eliminar:
