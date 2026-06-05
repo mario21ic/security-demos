@@ -265,8 +265,8 @@ sudo pkcs11-tool --module $OPENSC_MODULE \
   --label "config-teleport" \
   --application-label "teleport-config"
 
-sudo pkcs11-tool --module $OPENSC_MODULE \
-  --list-objects --type data
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type data
 
 # Leer desde HSM
 sudo pkcs11-tool --module $OPENSC_MODULE \
