@@ -117,7 +117,22 @@ EOF
 
 # Importar certificado de vuelta al HSM
 $ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --write-object cert-10.pem   --type cert   --id 11   --label "mi-cert"
+
 $ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
+# sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type cert
+
+# Leer desde HSM
+$ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --read-object --type cert \
+  --id 11 \
+  --output-file cert-from-hsm.der
+$ sudo file cert-from-hsm.der
+
+# Convertir y verificar contenido
+$ sudo openssl x509 -inform DER -in cert-from-hsm.der -text -noout | \
+  grep -E "Subject:|Issuer:|Not After"
+
+# Eliminar
+$ sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --delete-object --type cert --id 11
 ```
 
 Listado:
