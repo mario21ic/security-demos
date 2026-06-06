@@ -283,7 +283,8 @@ sudo cat config-teleport-recovered.json
 # Grabar un secret aes 256
 openssl rand 32 > aes-256.key
 echo "Clave AES generada: $(xxd -p aes-256.key)"
-sudo pkcs11-tool --module $OPENSC_MODULE   -l --pin $USER_PIN   --write-object aes-256.key   --type data   --id 20   --label "aes-256-key"   --private
+# sudo pkcs11-tool --module $OPENSC_MODULE   -l --pin $USER_PIN   --write-object aes-256.key   --type data   --id 20   --label "aes-256-key" --private # da error porque no soporta private
+sudo pkcs11-tool --module $OPENSC_MODULE   -l --pin $USER_PIN   --write-object aes-256.key   --type data   --id 20   --label "aes-256-key"
 
 # Leer
 sudo pkcs11-tool --module $OPENSC_MODULE \
@@ -295,11 +296,17 @@ echo "Clave AES recuperada: $(xxd -p aes-256-recovered.key)"
 
 ```
 
-Eliminar:
+### Eliminar
 ```
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --delete-object --type cert --id 10
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --delete-object --type privkey --id 10
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --delete-object --type data --label testdata
 ```
+
+### Resetear
+```
+sudo sc-hsm-tool   --initialize   --so-pin $SO_PIN   --pin $USER_PIN   --label "myHSM"   --dkek-shares 0
+```
+
 
 Based on https://github.com/OpenSC/OpenSC/wiki/SmartCardHSM#generate-key-pair
