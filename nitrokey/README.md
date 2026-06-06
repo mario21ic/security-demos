@@ -16,6 +16,8 @@ Reconocimiento del hardware:
 sudo lsusb
 sudo pcsc_scan
 
+sudo sc-hsm-tool --reader 0
+
 sudo opensc-tool --list-readers
 sudo opensc-tool --reader 0 --atr
 sudo opensc-tool --reader 0 --name
@@ -266,15 +268,17 @@ sudo pkcs11-tool --module $OPENSC_MODULE \
   --label "config-teleport" \
   --application-label "teleport-config"
 
+sudo pkcs11-tool --module $OPENSC_MODULE --list-objects
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects
 sudo pkcs11-tool --module $OPENSC_MODULE -l --pin $USER_PIN --list-objects --type data
 
-# Leer desde HSM
+# Leer desde HSM mediante labels
 sudo pkcs11-tool --module $OPENSC_MODULE \
   -l --pin $USER_PIN \
   --read-object --type data \
   --label config-teleport \
   --output-file config-teleport-recovered.json
+sudo cat config-teleport-recovered.json
 
 # Grabar un secret aes 256
 openssl rand 32 > aes-256.key
@@ -287,6 +291,7 @@ sudo pkcs11-tool --module $OPENSC_MODULE \
   --read-object --type data \
   --label "aes-256-key" \
   --output-file aes-256-recovered.key
+echo "Clave AES recuperada: $(xxd -p aes-256-recovered.key)"
 
 ```
 
